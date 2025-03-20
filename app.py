@@ -5,7 +5,7 @@ import random
 import os
 from flask_migrate import Migrate
 
-migrate = Migrate(app, db)
+
 
 # No terminal, execute as migrações:
 # flask db init
@@ -19,6 +19,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+migrate = Migrate(app, db)
 
 class User(db.Model):
     __tablename__ = "users"
