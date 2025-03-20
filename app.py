@@ -3,6 +3,15 @@ from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 import random
 import os
+from flask_migrate import Migrate
+
+migrate = Migrate(app, db)
+
+# No terminal, execute as migrações:
+# flask db init
+# flask db migrate
+# flask db upgrade
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
