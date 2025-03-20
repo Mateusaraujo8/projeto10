@@ -14,9 +14,9 @@ from flask_migrate import Migrate
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://advinha_user:IKGEmMcoUGEwjmQmcV1gnDunU7uJfj6e@dpg-cvdvj5hc1ekc73ean28g-a.oregon-postgres.render.com/advinha'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Essa configuração é opcional, mas ajuda a evitar warnings
+
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
