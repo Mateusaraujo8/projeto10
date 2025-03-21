@@ -2,24 +2,18 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 import random
-import os
 from flask_migrate import Migrate
+from config import Config
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://advinha_user:IKGEmMcoUGEwjmQmcV1gnDunU7uJfj6e@dpg-cvdvj5hc1ekc73ean28g-a.oregon-postgres.render.com/advinha'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://advinha_db_user:g5HLgah5N152Oy6R5PPYGS9GkdTSQJyY@dpg-cvemilt2ng1s73chu6g0-a.oregon-postgres.render.com/advinha_db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 bcrypt = Bcrypt(app)
-migrate = Migrate(app, db)
-
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    score = db.Column(db.Integer, default=0)
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Configura a migração
+from models import *  # Certifique-se de que suas tabelas estão importadas
+app.config.from_object(Config)
 
 @app.route('/')
 def index():
@@ -99,6 +93,4 @@ def ranking():
     return render_template('ranking.html', top_users=top_users)
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Cria as tabelas no banco de dados
     app.run(debug=True)
