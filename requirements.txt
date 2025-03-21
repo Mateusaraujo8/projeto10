@@ -1,9 +1,6 @@
-Flask
-Flask-SQLAlchemy
-Flask-Login
-Flask-WTF
-gunicorn
+flask
+flask_sqlalchemy
+flask_bcrypt
 psycopg2-binary
-Werkzeug
 python-dotenv
-SQLAlchemy
+gunicorn
