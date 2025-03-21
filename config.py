@@ -1,10 +1,16 @@
-import os 
-
-
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://advinha_db_user:g5HLgah5N152Oy6R5PPYGS9GkdTSQJyY@dpg-cvemilt2ng1s73chu6g0-a.oregon-postgres.render.com/advinha_db")
+import os
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    # Pegando a chave secreta do ambiente ou definindo um valor padrão seguro
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'chave_secreta_padrao')
+
+    # Pegando a URL do banco de dados
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+    # Corrigindo o prefixo 'postgres://' para 'postgresql://' (necessário para SQLAlchemy)
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+    # Definindo a URI do banco de dados
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or "sqlite:///fallback.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.getenv("SECRET_KEY", "6519b6c6f110a95fa342857c95879d4fa26400fcfb052895ce79e83a569da9c1")
