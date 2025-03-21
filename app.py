@@ -24,7 +24,7 @@ bcrypt = Bcrypt(app)
 db.init_app(app)
 
 # Importar o modelo de usuário depois da inicialização do db
-from models import User
+from models import Usuario
 
 @app.route('/')
 def index():
