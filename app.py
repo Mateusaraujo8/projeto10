@@ -1,31 +1,10 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import random
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta'  # Necessário para usar sessão
-
-def iniciar_jogo():
-    """Inicia um novo jogo e reseta as variáveis da sessão, mantendo o nome."""
-    session['numero_secreto'] = random.randint(1, 100)
-    session['tentativas'] = 0
-    session['mensagem'] = "Tente adivinhar um número entre 1 e 100."
-
-    # Garante que o histórico e o nome do usuário sejam mantidos
-    session.setdefault('historico', [])
-    session.setdefault('nome', None)
+app.secret_key = "sua_chave_secreta"  # Alterar por uma chave segura
 
 @app.route("/", methods=["GET", "POST"])
-def pedir_nome():
-    """Página inicial para pedir o nome do jogador."""
-    if request.method == "POST":
-        nome = request.form.get("nome").strip()
-        if nome:
-            session['nome'] = nome  # Salva o nome na sessão
-            iniciar_jogo()  # Inicia o jogo depois de salvar o nome
-            return redirect(url_for("index"))
-    return render_template("nome.html")
-
-@app.route("/jogo", methods=["GET", "POST"])
 def index():
     """Rota principal do jogo."""
     if 'nome' not in session:
@@ -42,31 +21,34 @@ def index():
                 session['mensagem'] = "Muito alto! Tente um número menor."
             else:
                 session['mensagem'] = f"Parabéns, {session['nome']}! Você acertou em {session['tentativas']} tentativas."
-                
-                # Garante que o histórico tenha o nome correto
                 session['historico'].append({
-                    "nome": session.get('nome', 'Jogador'),
+                    "nome": session['nome'],
                     "tentativas": session['tentativas'],
                     "numero_secreto": session['numero_secreto']
                 })
-
                 return redirect(url_for("novo_jogo"))
         except ValueError:
             session['mensagem'] = "Por favor, digite um número válido."
 
-    return render_template("index.html", mensagem=session['mensagem'], 
-                           tentativas=session['tentativas'], 
-                           historico=session['historico'], 
-                           nome=session['nome'])
+    return render_template("index.html", mensagem=session['mensagem'],
+                           tentativas=session['tentativas'],
+                           historico=session['historico'], nome=session['nome'])
 
-
-@app.route("/novo")
+@app.route("/novo", methods=["GET"])
 def novo_jogo():
-    """Reinicia o jogo, mas mantém o nome e o histórico."""
-    nome = session.get('nome', None)  # Guarda o nome antes de reiniciar
-    iniciar_jogo()
-    session['nome'] = nome  # Restaura o nome do jogador
-    return redirect(url_for("index"))
+    """Inicia um novo jogo."""
+    session['numero_secreto'] = random.randint(1, 100)
+    session['tentativas'] = 0
+    return redirect(url_for('index'))
+
+@app.route("/pedir_nome", methods=["GET", "POST"])
+def pedir_nome():
+    """Pede o nome do usuário."""
+    if request.method == "POST":
+        session['nome'] = request.form["nome"]
+        session['historico'] = []
+        return redirect(url_for("index"))
+    return render_template("pedir_nome.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
