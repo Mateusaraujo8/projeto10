@@ -1,92 +1,72 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_bcrypt import Bcrypt
-from dotenv import load_dotenv
-import os
+from flask import Flask, render_template, request, session, redirect, url_for
 import random
-from pathlib import Path
-
-# Carregar variáveis do arquivo .env
-load_dotenv()
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'sua_chave_secreta'  # Necessário para usar sessão
 
-# Importar db de db.py
-from db import db
+def iniciar_jogo():
+    """Inicia um novo jogo e reseta as variáveis da sessão, mantendo o nome."""
+    session['numero_secreto'] = random.randint(1, 100)
+    session['tentativas'] = 0
+    session['mensagem'] = "Tente adivinhar um número entre 1 e 100."
 
-bcrypt = Bcrypt(app)
+    # Garante que o histórico e o nome do usuário sejam mantidos
+    session.setdefault('historico', [])
+    session.setdefault('nome', None)
 
-# Inicializar o db com a app
-db.init_app(app)
+@app.route("/", methods=["GET", "POST"])
+def pedir_nome():
+    """Página inicial para pedir o nome do jogador."""
+    if request.method == "POST":
+        nome = request.form.get("nome").strip()
+        if nome:
+            session['nome'] = nome  # Salva o nome na sessão
+            iniciar_jogo()  # Inicia o jogo depois de salvar o nome
+            return redirect(url_for("index"))
+    return render_template("nome.html")
 
-# Importar o modelo de usuário depois da inicialização do db
-from models import Usuario
-
-@app.route('/')
+@app.route("/jogo", methods=["GET", "POST"])
 def index():
-    return render_template('index.html')
+    """Rota principal do jogo."""
+    if 'nome' not in session:
+        return redirect(url_for("pedir_nome"))
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    if request.method == "POST":
+        try:
+            palpite = int(request.form["palpite"])
+            session['tentativas'] += 1
 
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
+            if palpite < session['numero_secreto']:
+                session['mensagem'] = "Muito baixo! Tente um número maior."
+            elif palpite > session['numero_secreto']:
+                session['mensagem'] = "Muito alto! Tente um número menor."
+            else:
+                session['mensagem'] = f"Parabéns, {session['nome']}! Você acertou em {session['tentativas']} tentativas."
+                
+                # Garante que o histórico tenha o nome correto
+                session['historico'].append({
+                    "nome": session.get('nome', 'Jogador'),
+                    "tentativas": session['tentativas'],
+                    "numero_secreto": session['numero_secreto']
+                })
 
-        flash('Usuário cadastrado com sucesso!', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
+                return redirect(url_for("novo_jogo"))
+        except ValueError:
+            session['mensagem'] = "Por favor, digite um número válido."
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        user = User.query.filter_by(username=username).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            flash('Login realizado com sucesso!', 'success')
-            return redirect(url_for('game'))
-        else:
-            flash('Usuário ou senha inválidos', 'danger')
-    
-    return render_template('login.html')
+    return render_template("index.html", mensagem=session['mensagem'], 
+                           tentativas=session['tentativas'], 
+                           historico=session['historico'], 
+                           nome=session['nome'])
 
-@app.route('/game', methods=['GET', 'POST'])
-def game():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
 
-    # Verificar se o número a ser adivinhado já foi gerado
-    if 'number' not in session:
-        session['number'] = random.randint(1, 100)
-        session['attempts'] = 0
+@app.route("/novo")
+def novo_jogo():
+    """Reinicia o jogo, mas mantém o nome e o histórico."""
+    nome = session.get('nome', None)  # Guarda o nome antes de reiniciar
+    iniciar_jogo()
+    session['nome'] = nome  # Restaura o nome do jogador
+    return redirect(url_for("index"))
 
-    if request.method == 'POST':
-        guess = int(request.form['guess'])
-        session['attempts'] += 1
-
-        if guess < session['number']:
-            feedback = 'Muito baixo!'
-        elif guess > session['number']:
-            feedback = 'Muito alto!'
-        else:
-            feedback = 'Acertou!'
-            session['number'] = random.randint(1, 100)  # Iniciar novo jogo
-            session['attempts'] = 0
-
-        return render_template('game.html', feedback=feedback, attempts=session['attempts'])
-
-    return render_template('game.html', feedback=None)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

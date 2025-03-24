@@ -4,10 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo de Adivinhação</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <h1>Bem-vindo ao Jogo de Adivinhação!</h1>
-    <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Cadastro</a>
+<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
+    <div class="container text-center">
+        <h1 class="mb-4">Jogo de Adivinhação</h1>
+        <p class="fs-5">{{ mensagem }}</p>
+        <p class="fs-6">Tentativas: {{ tentativas }}</p>
+
+        <form method="post" class="mb-3">
+            <input type="number" name="palpite" class="form-control w-50 mx-auto mb-2" required>
+            <button type="submit" class="btn btn-primary">Enviar</button>
+        </form>
+
+        <a href="{{ url_for('novo_jogo') }}" class="btn btn-danger mb-4">Novo Jogo</a>
+
+        {% if historico %}
+        <h3>Histórico de Partidas</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tentativas</th>
+                    <th>Número Secreto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for partida in historico %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ partida.nome }}</td>
+                    <td>{{ partida.tentativas }}</td>
+                    <td>{{ partida.numero_secreto }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
 </body>
 </html>
